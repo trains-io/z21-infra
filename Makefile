@@ -37,7 +37,7 @@ all: tools kind env ## Download tools, launch kind, and generate env
 # TOOLS
 ############################
 PHONY: tools
-tools: $(TOOLS) ## Download tools
+tools: $(TOOLS) ## Download tools (e.g. kubectl, kpt, ko, ...)
 
 .PHONY: go
 go: $(GO_DIR) ## Download go
