@@ -5,6 +5,7 @@ HELM_VERSION        ?= v4.0.0
 KO_VERSION          ?= 0.18.0
 KPT_VERSION         ?= v1.0.0-beta.58
 NATS_SERVER_VERSION ?= v2.12.2
+Z21SCAN_VERSION     ?= 0.0.3
 
 BIN_DIR := $(CURDIR)/bin
 GO_DIR  := $(CURDIR)
@@ -23,8 +24,9 @@ HELM    ?= helm
 KO      ?= ko
 KPT     ?= kpt
 NATS    ?= nats-server
+Z21SCAN ?= z21scan
 
-TOOLS := $(GO) $(K) $(HELM) $(KO) $(KPT) $(NATS)
+TOOLS := $(GO) $(K) $(HELM) $(KO) $(KPT) $(NATS) $(Z21SCAN)
 
 .PHONY: all
 all: tools kind env ## Download tools, launch kind, and generate env
@@ -70,6 +72,12 @@ kpt: $(BIN_DIR) ## Download kpt
 nats-server: $(BIN_DIR) ## Download NATS server
 	curl -fsSL https://binaries.nats.dev/nats-io/nats-server/v2@$(NATS_SERVER_VERSION) | sh
 	mv $@ $(BIN_DIR)
+
+.PHONY: z21scan
+z21scan: $(BIN_DIR) ## Download z21scan
+	curl -fsSL -o /tmp/z21scan.zip https://github.com/trains-io/z21scan/releases/download/v$(Z21SCAN_VERSION)/z21scan-$(Z21SCAN_VERSION)-linux-amd64.zip
+	unzip /tmp/z21scan.zip -d $(BIN_DIR)
+	rm -rf /tmp/z21scan.zip
 
 ############################
 # KIND
