@@ -5,8 +5,8 @@ HELM_VERSION        ?= v4.0.0
 KO_VERSION          ?= 0.18.0
 KPT_VERSION         ?= v1.0.0-beta.58
 NATS_SERVER_VERSION ?= v2.12.2
-Z21SCAN_VERSION     ?= 0.0.3
-Z21CLI_VERSION      ?= 0.0.2
+Z21SCAN_VERSION     ?= 0.0.4
+Z21CLI_VERSION      ?= 0.0.3
 
 BIN_DIR := $(CURDIR)/bin
 GO_DIR  := $(CURDIR)
