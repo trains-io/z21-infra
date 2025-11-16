@@ -6,6 +6,7 @@ KO_VERSION          ?= 0.18.0
 KPT_VERSION         ?= v1.0.0-beta.58
 NATS_SERVER_VERSION ?= v2.12.2
 Z21SCAN_VERSION     ?= 0.0.3
+Z21CLI_VERSION      ?= 0.0.2
 
 BIN_DIR := $(CURDIR)/bin
 GO_DIR  := $(CURDIR)
@@ -25,8 +26,9 @@ KO      ?= ko
 KPT     ?= kpt
 NATS    ?= nats-server
 Z21SCAN ?= z21scan
+Z21CLI  ?= z21cli
 
-TOOLS := $(GO) $(K) $(HELM) $(KO) $(KPT) $(NATS) $(Z21SCAN)
+TOOLS := $(GO) $(K) $(HELM) $(KO) $(KPT) $(NATS) $(Z21SCAN) $(Z21CLI)
 
 .PHONY: all
 all: tools kind env ## Download tools, launch kind, and generate env
@@ -76,8 +78,14 @@ nats-server: $(BIN_DIR) ## Download NATS server
 .PHONY: z21scan
 z21scan: $(BIN_DIR) ## Download z21scan
 	curl -fsSL -o /tmp/z21scan.zip https://github.com/trains-io/z21scan/releases/download/v$(Z21SCAN_VERSION)/z21scan-$(Z21SCAN_VERSION)-linux-amd64.zip
-	unzip /tmp/z21scan.zip -d $(BIN_DIR)
+	unzip /tmp/z21scan.zip z21scan -d $(BIN_DIR)
 	rm -rf /tmp/z21scan.zip
+
+.PHONY: z21cli
+z21cli: $(BIN_DIR) ## Download z21cli
+	curl -fsSL -o /tmp/z21cli.zip https://github.com/trains-io/z21cli/releases/download/v$(Z21CLI_VERSION)/z21cli-$(Z21CLI_VERSION)-linux-amd64.zip
+	unzip /tmp/z21cli.zip z21cli -d $(BIN_DIR)
+	rm -rf /tmp/z21cli.zip
 
 ############################
 # KIND
