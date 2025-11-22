@@ -8,7 +8,14 @@ and helper aliases in your shell.
 
 ### Quick Start
 
-Clone the repo, then run:
+Clone the repository:
+
+```sh
+git clone https://github.com/trains-io/z21-infra.git
+cd z21-infra
+```
+
+Then run:
 
 ```sh
 make all
