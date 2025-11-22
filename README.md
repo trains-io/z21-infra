@@ -3,8 +3,8 @@
 `z21-infra` is a lightweight infrastructure bootstrapper for local Kubernetes development.
 
 It provides a self-contained toolchain (Go, kubectl, Helm, ko, kpt, ...), sets up a KinD cluster,
-deploys core dependencies such as **NATS** and **Fluent Bit**, and generates a portable `.env` file
-to expose all tools and helper aliases in your shell.
+deploys core dependencies such as **NATS**, and generates a portable `.env` file to expose all tools 
+and helper aliases in your shell.
 
 ### Quick Start
 
@@ -18,7 +18,7 @@ This will:
 
 1. Download all tools into `./bin`
 2. Create a KinD cluster named `dev`
-3. Deploy NATS and Fluent Bit into the cluster
+3. Deploy NATS into the cluster
 4. Generate `.env`
 
 Load the environment:
