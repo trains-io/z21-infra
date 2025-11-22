@@ -20,6 +20,7 @@ $(BIN_DIR):
 $(GO_DIR):
 	mkdir -p $(GO_DIR)
 
+KIND    ?= kind
 GO      ?= go
 K       ?= kubectl
 HELM    ?= helm
