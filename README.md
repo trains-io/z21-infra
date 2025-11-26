@@ -26,7 +26,8 @@ This will:
 1. Download all tools into `./bin`
 2. Create a KinD cluster named `dev`
 3. Deploy NATS into the cluster
-4. Generate `.env`
+4. Build and apply resources from `build/manifests`
+5. Generate `.env`
 
 Load the environment:
 
@@ -50,6 +51,7 @@ This removes:
 
 - KinD cluster
 - downloaded tools (`./bin`)
+- build directory (`./build`)
 - generated `.env` file
 
 ### License

@@ -10,31 +10,41 @@ Z21SCAN_VERSION     ?= 0.0.4
 Z21CLI_VERSION      ?= 0.0.3
 
 BIN_DIR := $(CURDIR)/bin
-GO_DIR  := $(CURDIR)
+BUILD   := $(CURDIR)/build
+
+KPT_FN_APPLY_SETTERS_IMG := ghcr.io/kptdev/krm-functions-catalog/apply-setters:v0.2
 
 LOCAL_CLUSTER_NAME := dev
 
 $(BIN_DIR):
-	mkdir -p $(BIN_DIR)
+	@mkdir -p $@
 
-$(GO_DIR):
-	mkdir -p $(GO_DIR)
+$(BUILD):
+	@mkdir -p $@
 
-KIND    ?= kind
-GO      ?= go
-K       ?= kubectl
-HELM    ?= helm
-KO      ?= ko
-KPT     ?= kpt
-KB      ?= kubebuilder
-NATS    ?= nats-server
-Z21SCAN ?= z21scan
-Z21CLI  ?= z21cli
+KIND    ?= $(BIN_DIR)/kind
+GO      ?= $(BIN_DIR)/go/bin/go
+K       ?= $(BIN_DIR)/kubectl
+HELM    ?= $(BIN_DIR)/helm
+KO      ?= $(BIN_DIR)/ko
+KPT     ?= $(BIN_DIR)/kpt
+KB      ?= $(BIN_DIR)/kubebuilder
+NATS    ?= $(BIN_DIR)/nats-server
+Z21SCAN ?= $(BIN_DIR)/z21scan
+Z21CLI  ?= $(BIN_DIR)/z21cli
 
-TOOLS := $(GO) $(K) $(HELM) $(KO) $(KPT) $(KB) $(NATS) $(Z21SCAN) $(Z21CLI)
+TOOLS := $(GO) \
+		 $(K) \
+		 $(HELM) \
+		 $(KO) \
+		 $(KPT) \
+		 $(KB) \
+		 $(NATS) \
+		 $(Z21SCAN) \
+		 $(Z21CLI)
 
 .PHONY: all
-all: tools kind env ## Download tools, launch kind, and generate env
+all: tools kind manifest env ## Download tools, launch kind, build and apply manifests, and generate env
 
 ############################
 # TOOLS
@@ -43,65 +53,74 @@ PHONY: tools
 tools: $(TOOLS) ## Download tools (e.g. kubectl, kpt, ko, ...)
 
 .PHONY: go
-go: $(GO_DIR) ## Download go
-	@echo "Downloading $@ $(GO_VERSION) ..."
+go: $(GO) ## Download go
+$(GO): | $(BIN_DIR)
+	@echo "Downloading $$(basename $@) $(GO_VERSION) ..."
 	@curl -fsSL -o /tmp/go.tar.gz https://go.dev/dl/go$(GO_VERSION).linux-amd64.tar.gz
-	@tar -xzf /tmp/go.tar.gz -C $(GO_DIR)
+	@tar -xzf /tmp/go.tar.gz -C $(BIN_DIR)
 
 .PHONY: kubectl
-kubectl: $(BIN_DIR) ## Download kubectl
-	@echo "Downloading $@ $(KUBECTL_VERSION) ..."
-	@curl -fsSL -o $(BIN_DIR)/$@ https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/linux/amd64/kubectl
-	@chmod +x $(BIN_DIR)/$@
+kubectl: $(K) ## Download kubectl
+$(K): | $(BIN_DIR)
+	@echo "Downloading $$(basename $@) $(KUBECTL_VERSION) ..."
+	@curl -fsSL -o $@ https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/linux/amd64/kubectl
+	@chmod +x $@
 
 .PHONY: helm
-helm: $(BIN_DIR) ## Download helm
-	@echo "Downloading $@ $(HELM_VERSION) ..."
+helm: $(HELM) ## Download helm
+$(HELM): | $(BIN_DIR)
+	@echo "Downloading $$(basename $@) $(HELM_VERSION) ..."
 	@curl -fsSL -o /tmp/helm.tar.gz https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 	@tar -xzf /tmp/helm.tar.gz -C /tmp
-	@mv /tmp/linux-amd64/helm $(BIN_DIR)/$@
-	@chmod +x $(BIN_DIR)/$@
+	@mv /tmp/linux-amd64/helm $@
+	@chmod +x $@
 	@rm -rf /tmp/helm.tar.gz /tmp/linux-amd64
 
 .PHONY: ko
-ko: $(BIN_DIR) ## Download ko
-	@echo "Downloading $@ $(KO_VERSION) ..."
+ko: $(KO) ## Download ko
+$(KO): | $(BIN_DIR)
+	@echo "Downloading $$(basename $@) $(KO_VERSION) ..."
 	@curl -fsSL -o /tmp/ko.tar.gz https://github.com/ko-build/ko/releases/download/v${KO_VERSION}/ko_${KO_VERSION}_linux_x86_64.tar.gz
-	@tar -xzf /tmp/ko.tar.gz $@
-	@mv $@ $(BIN_DIR)/$@
-	@chmod +x $(BIN_DIR)/$@
+	@tar -xzf /tmp/ko.tar.gz $$(basename $@)
+	@mv $$(basename $@) $@
+	@chmod +x $@
 	@rm -rf /tmp/ko.tar.gz
 
 .PHONY: kpt
-kpt: $(BIN_DIR) ## Download kpt
-	@echo "Downloading $@ $(KPT_VERSION) ..."
-	@curl -fsSL -o $(BIN_DIR)/$@ https://github.com/kptdev/kpt/releases/download/v1.0.0-beta.59/kpt_linux_amd64
-	@chmod +x $(BIN_DIR)/$@
+kpt: $(KPT) ## Download kpt
+$(KPT): | $(BIN_DIR)
+	@echo "Downloading $$(basename $@) $(KPT_VERSION) ..."
+	@curl -fsSL -o $@ https://github.com/kptdev/kpt/releases/download/v1.0.0-beta.59/kpt_linux_amd64
+	@chmod +x $@
 
 .PHONY: kubebuilder
-kubebuilder: $(BIN_DIR) ## Download kubebuilder
-	@echo "Downloading $@ $(KB_VERSION) ..."
-	@curl -fsSL -o $(BIN_DIR)/$@ https://github.com/kubernetes-sigs/kubebuilder/releases/download/${KB_VERSION}/kubebuilder_linux_amd64
-	@chmod +x $(BIN_DIR)/$@
+kubebuilder: $(KB) ## Download kubebuilder
+$(KB): | $(BIN_DIR)
+	@echo "Downloading $$(basename $@) $(KB_VERSION) ..."
+	@curl -fsSL -o $@ https://github.com/kubernetes-sigs/kubebuilder/releases/download/${KB_VERSION}/kubebuilder_linux_amd64
+	@chmod +x $@
 
 .PHONY: nats-server
-nats-server: $(BIN_DIR) ## Download NATS server
-	@echo "Downloading $@ $(NATS_SERVER_VERSION) ..."
+nats-server: $(NATS) ## Download NATS server
+$(NATS): | $(BIN_DIR)
+	@echo "Downloading $$(basename $@) $(NATS_SERVER_VERSION) ..."
 	@curl -fsSL https://binaries.nats.dev/nats-io/nats-server/v2@$(NATS_SERVER_VERSION) | sh >/dev/null
-	@mv $@ $(BIN_DIR)
+	@mv $$(basename $@) $(BIN_DIR)
 
 .PHONY: z21scan
-z21scan: $(BIN_DIR) ## Download z21scan
-	@echo "Downloading $@ $(Z21SCAN_VERSION) ..."
+z21scan: $(Z21SCAN) ## Download z21scan
+$(Z21SCAN): | $(BIN_DIR)
+	@echo "Downloading $$(basename $@) $(Z21SCAN_VERSION) ..."
 	@curl -fsSL -o /tmp/z21scan.zip https://github.com/trains-io/z21scan/releases/download/v$(Z21SCAN_VERSION)/z21scan-$(Z21SCAN_VERSION)-linux-amd64.zip
-	@unzip -f /tmp/z21scan.zip z21scan -d $(BIN_DIR) >/dev/null
+	@unzip /tmp/z21scan.zip z21scan -d $(BIN_DIR) >/dev/null
 	@rm -rf /tmp/z21scan.zip
 
 .PHONY: z21cli
-z21cli: $(BIN_DIR) ## Download z21cli
-	@echo "Downloading $@ $(Z21CLI_VERSION) ..."
+z21cli: $(Z21CLI) ## Download z21cli
+$(Z21CLI): | $(BIN_DIR)
+	@echo "Downloading $$(basename $@) $(Z21CLI_VERSION) ..."
 	@curl -fsSL -o /tmp/z21cli.zip https://github.com/trains-io/z21cli/releases/download/v$(Z21CLI_VERSION)/z21cli-$(Z21CLI_VERSION)-linux-amd64.zip
-	@unzip -f /tmp/z21cli.zip z21cli -d $(BIN_DIR) >/dev/null
+	@unzip /tmp/z21cli.zip z21cli -d $(BIN_DIR) >/dev/null
 	@rm -rf /tmp/z21cli.zip
 
 ############################
@@ -117,12 +136,25 @@ kind: ## Launch a local KinD cluster
 	@$(HELM) repo add nats https://nats-io.github.io/k8s/helm/charts/ || true
 	@$(HELM) install nats nats/nats 2>/dev/null || true
 
+.PHONY: manifest
+manifest: $(BUILD) ## Build and apply k8s manifests for local deployment
+	@echo "Building manifests with kpt ..."
+	@rm -rf $(BUILD)/manifests
+	@$(KPT) fn eval manifests/ \
+		--image $(KPT_FN_APPLY_SETTERS_IMG) \
+		-o $(BUILD)/manifests \
+		-- z21-name=main \
+		   z21-addr=${Z21_ADDR}
+
+	@echo "Applying manifests ..."
+	@$(K) apply -f $(BUILD)/manifests
+
 ############################
 # ENV
 ############################
 .PHONY: env
 env: ## Generate environment
-	@echo "export PATH=$(BIN_DIR):$(GO_DIR)/go/bin:\$$PATH" > .env
+	@echo "export PATH=$(BIN_DIR):$(BIN_DIR)/go/bin:\$$PATH" > .env
 	@echo "" >> .env
 	@echo "# Run natscli inside kubernetes" >> .env
 	@echo "alias nats=\"kubectl exec -it deployment/nats-box -- nats\"" >> .env
@@ -133,15 +165,16 @@ env: ## Generate environment
 .PHONY: teardown
 teardown: ## Delete local KinD cluster
 	@$(KIND) delete cluster -n $(LOCAL_CLUSTER_NAME) || true
-	@$(HELM) repo remove nats || true
+	@$(HELM) repo remove nats
 
 .PHONY: clean
-clean: ## Remove tools
-	rm -rf $(BIN_DIR)
+clean: ## Remove tools and build files
+	@rm -rf $(BIN_DIR)
+	@rm -rf $(BUILD)
 
 .PHONY: mrproper
 mrproper: teardown clean ## Remove tools, teardown local KinD cluster, and env
-	rm -rf .env
+	@rm -rf .env
 
 .PHONY: help
 help: ## Show this help message
@@ -150,4 +183,4 @@ help: ## Show this help message
 	@echo "Available targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 		| sort \
-		| awk 'BEGIN {FS = ":.*?## "}; {printf "  %-10s %s\n", $$1, $$2}'
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "  %-14s %s\n", $$1, $$2}'
