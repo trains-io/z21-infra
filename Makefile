@@ -1,4 +1,5 @@
 # Versions
+KIND_VERSION        ?= v0.30.0
 GO_VERSION          ?= 1.25.4
 KUBECTL_VERSION     ?= v1.34.2
 HELM_VERSION        ?= v4.0.0
@@ -33,7 +34,8 @@ NATS    ?= $(BIN_DIR)/nats-server
 Z21SCAN ?= $(BIN_DIR)/z21scan
 Z21CLI  ?= $(BIN_DIR)/z21cli
 
-TOOLS := $(GO) \
+TOOLS := $(KIND) \
+		 $(GO) \
 		 $(K) \
 		 $(HELM) \
 		 $(KO) \
@@ -44,13 +46,20 @@ TOOLS := $(GO) \
 		 $(Z21CLI)
 
 .PHONY: all
-all: tools kind manifest env ## Download tools, launch kind, build and apply manifests, and generate env
+all: tools cluster manifest env ## Download tools, launch kind, build and apply manifests, and generate env
 
 ############################
 # TOOLS
 ############################
 PHONY: tools
 tools: $(TOOLS) ## Download tools (e.g. kubectl, kpt, ko, ...)
+
+.PHONY: kind
+kind: $(KIND) ## Download kind
+$(KIND): | $(BIN_DIR)
+	@echo "Downloading $$(basename $@) $(KIND_VERSION) ..."
+	@curl -fsSL -o $@ https://kind.sigs.k8s.io/dl/$(KIND_VERSION)/kind-linux-amd64
+	@chmod +x $@
 
 .PHONY: go
 go: $(GO) ## Download go
@@ -126,8 +135,8 @@ $(Z21CLI): | $(BIN_DIR)
 ############################
 # KIND
 ############################
-.PHONY: kind
-kind: ## Launch a local KinD cluster
+.PHONY: cluster
+cluster: ## Launch a local KinD cluster
 	@echo "Creating local cluster \"$(LOCAL_CLUSTER_NAME)\" ..."
 	@$(KIND) create cluster --name $(LOCAL_CLUSTER_NAME) 2>/dev/null || true
 	@$(K) config use-context kind-$(LOCAL_CLUSTER_NAME)

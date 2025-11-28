@@ -10,7 +10,7 @@ metadata:
   name: z21-detector-cr-reader
   namespace: default
 rules:
-  - apiGroups: ["trains.io"]
+  - apiGroups: ["zack.trains.io"]
     resources: ["detectors"]
     verbs: ["get", "list", "watch"]
 ---
@@ -20,7 +20,7 @@ metadata:
   name: z21-detector-cr-writer
   namespace: default
 rules:
-  - apiGroups: ["trains.io"]
+  - apiGroups: ["zack.trains.io"]
     resources: ["detectors"]
     verbs: ["create", "update", "patch"]
 ---
@@ -30,7 +30,7 @@ metadata:
   name: z21-detector-cr-status-writer
   namespace: default
 rules:
-  - apiGroups: ["trains.io"]
+  - apiGroups: ["zack.trains.io"]
     resources: ["detectors/status"]
     verbs: ["get", "update", "patch"]
 ---
@@ -60,4 +60,18 @@ subjects:
 roleRef:
   kind: Role
   name: z21-detector-cr-writer
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: z21-can-manager-updater
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: z21-can-manager
+    namespace: default
+roleRef:
+  kind: Role
+  name: z21-detector-cr-status-writer
   apiGroup: rbac.authorization.k8s.io
